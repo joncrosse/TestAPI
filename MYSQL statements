@@ -3,7 +3,7 @@ APIs:
 {"status_code":"-10", "error":"invalid credentials"}
 
 #DONE#/api/createuser     // create a new Instatwitsnapbook user
-/api/seeuser        // find a user and give information
+#DONE#/api/seeuser        // find a user and give information
 /api/suggestions    // recommend (4) followers based on other followers
 /api/poststory      // post a story/comment/etc and maybe picture
 /api/reprint        // "like" or "retweet" someone's Story
@@ -24,6 +24,10 @@ Provided:
 insert into Identity (handle, password, fullname, location, email, bdate, joined) values('jcock', 'test', 'Jack Hancock', 'Lexington', 'jcock@gmail.com', '1996-01-01', '2020-04-29');
 
 //follow\\
- insert into Follows (follower, followed, tstamp) values(1,2,now());
+ insert into Follows (follower, followed, tstamp) values(idnum,idnum,now());
+ 
+ //SeeUser\\
+ select * from Identity where idnum = idnum;
+
 
 
