@@ -7,7 +7,7 @@ APIs:
 /api/suggestions    // recommend (4) followers based on other followers
 /api/poststory      // post a story/comment/etc and maybe picture
 /api/reprint        // "like" or "retweet" someone's Story
-/api/follow         // add someone to your followings list
+#DONE#/api/follow         // add someone to your followings list
 /api/unfollow       // remove someone from your followings list
 /api/block          // Block a user
 /api/timeline       // see all Story/Reprints of people you follow
