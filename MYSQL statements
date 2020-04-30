@@ -1,2 +1,3 @@
+  //CREATE USER\\
+insert into Identity (handle, password, fullname, location, email, bdate, joined) values('jcock', 'test', 'Jack Hancock', 'Lexington', 'jcock@gmail.com', '1996-01-01', '2020-04-29');
 
-insert into Identity values(1,'joncrosse', 'test', 'Jon Crosse', 'Lexington', 'jon.crosse@aol.com', '1997-11-09', '2020-04-29');
