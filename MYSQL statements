@@ -4,12 +4,12 @@ APIs:
 
 #DONE#/api/createuser     // create a new Instatwitsnapbook user
 #DONE#/api/seeuser        // find a user and give information
-/api/suggestions    // recommend (4) followers based on other followers
-/api/poststory      // post a story/comment/etc and maybe picture
-/api/reprint        // "like" or "retweet" someone's Story
+#DONE#/api/suggestions    // recommend (4) followers based on other followers
+#DONE#/api/poststory      // post a story/comment/etc and maybe picture
+#DONE#/api/reprint        // "like" or "retweet" someone's Story
 #DONE#/api/follow         // add someone to your followings list
-/api/unfollow       // remove someone from your followings list
-/api/block          // Block a user
+#DONE#unfollow       // remove someone from your followings list
+#DONE/api/block          // Block a user
 /api/timeline       // see all Story/Reprints of people you follow
 
 Provided:
@@ -22,12 +22,50 @@ Provided:
 
 //CREATE USER\\
 insert into Identity (handle, password, fullname, location, email, bdate, joined) values('jcock', 'test', 'Jack Hancock', 'Lexington', 'jcock@gmail.com', '1996-01-01', '2020-04-29');
+ 
+ //SeeUser\\
+ select * from Identity where idnum = idnum;
+
+//Unfollow\\
+delete from Follows where follower = idnum and followed = idnum;
 
 //follow\\
  insert into Follows (follower, followed, tstamp) values(idnum,idnum,now());
- 
- //SeeUser\\
- SELECT handle, fullname, location,email,bdate,joined FROM Identity WHERE idnum = #{params[:id]}
+
+//postStory\\
+Insert into Story (idnum, chapter, url, expires, tstamp) values (idnum,'Though shall share the beans with thy homies', 'https://i.redd.it/zfmb6ade6nqy.png', '9999-12-31 23:59:59.999999',now());
+
+//reprint\\
+insert into Reprint(idnum,sidnum,likeit,tstamp) values (idnum,1,0,now());
+
+//block\\
+insert into Block (idnum,blocked,tstamp) values (idnum,9,now());
+
+
+
+//Suggestions\\
+(pseudo code for ruby and sql)
+suggestions[3] = ('','','','')
+i = 0;
+Loop through all USER in Identity
+	if idnum != USER.idnum #User is not the current user
+		following = select * from Follows where follower = idnum AND followed = USER.idnum; 
+		if following is empty:
+			suggestions[i] = USER.idnum;
+			i += 1
+			if i == 4:
+				Done = true;
+	if done = true then break and finish;
+output suggestions;
+
+
+
+SEED DATA:
+insert into Identity (handle, password, fullname, location, email, bdate, joined) values('bdj', 'test', 'Erik Johnson', 'Lexington', 'DarrellsSon@gmail.com', '1996-01-01', '2020-04-29');
+insert into Identity (handle, password, fullname, location, email, bdate, joined) values('Jreyn', 'test', 'John Reynolds', 'Lexington', 'RowdyLover@gmail.com', '1996-01-01', '2020-04-29');
+insert into Identity (handle, password, fullname, location, email, bdate, joined) values('TanGrizle', 'test', 'Tanner Green', 'Lexington', 'IamWhipped@gmail.com', '1996-01-01', '2020-04-29');
+insert into Identity (handle, password, fullname, location, email, bdate, joined) values('ClayMeister', 'test', 'Clay Wohlender', 'Lexington', 'WithDaGang@gmail.com', '1996-01-01', '2020-04-29');
+
 
 
 
