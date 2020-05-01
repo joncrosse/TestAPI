@@ -52,10 +52,10 @@ like story
 
 select a.idnum, a.handle from Identity a
 JOIN Follows x ON(a.idnum = x.followed)
-WHERE x.follower IN (SELECT followed FROM Follows WHERE follower = 4)
+WHERE x.follower IN (SELECT followed FROM Follows WHERE follower = #{getUser[0]["idnum"]})
 AND
-x.followed NOT IN (SELECT followed FROM Follows WHERE follower = 4)
-AND a.idnum != 4
+x.followed NOT IN (SELECT followed FROM Follows WHERE follower = #{getUser[0]["idnum"]})
+AND a.idnum != #{getUser[0]["idnum"]}
 GROUP BY a.idnum
 LIMIT 4;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
