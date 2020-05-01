@@ -44,8 +44,8 @@ class ApiController < ApplicationController
             bdate,
             joined 
             from Identity i
-            JOIN Block b ON (i.idnum = b.idnum)
-            where i.idnum = #{params[:id]} AND b.blocked != #{getUser[0]["idnum"]};"
+            LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
+            where NOT EXISTS (select * from Block where idnum = #{params[:id]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{params[:id]} GROUP BY i.idnum;"
         founduser = ActiveRecord::Base.connection.exec_query(sql);
 
         if authverification === '1'
