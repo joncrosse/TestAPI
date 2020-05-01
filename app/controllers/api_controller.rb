@@ -12,11 +12,20 @@ class ApiController < ApplicationController
         end
 
     end
+
+    def getID(*param)
+      guSQL = "select idnum from Identity where handle = '#{params[0]}'"
+      getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+
+      return getUser[0]["idnum"]
+    end
+
     def status
           
           sql = "select * from Identity where idnum = 1"
           
           status = param_auth(params[:handle], params[:password])
+
           if status === '1'
             respond_to do |format|
                 msg = {"status_code":"-10", "error":"invalid credentials"}
@@ -32,14 +41,18 @@ class ApiController < ApplicationController
     end
 
     def seeuser
+        guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+        getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
         authverification = param_auth(params[:handle], params[:password])
             sql = "select handle, 
-                          fullname, 
-                          location,
-                          email,
-                          bdate,
-                          joined 
-                          from Identity where idnum = #{params[:id]}"
+            fullname, 
+            location,
+            email,
+            bdate,
+            joined 
+            from Identity i
+            JOIN Block b ON (i.idnum = b.idnum)
+            where i.idnum = #{params[:id]} AND b.blocked != 1;"
         founduser = ActiveRecord::Base.connection.exec_query(sql);
 
         if authverification === '1'
@@ -73,7 +86,23 @@ class ApiController < ApplicationController
             respond_to do |format|
               msg = { :status => userDone.rows}
               format.json  { render :json => msg } # don't do msg.to_json
-            end
-            
+            end          
+    end
+
+    def unfollow
+      
+      authverification = param_auth(params[:handle], params[:password])
+      guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+      getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+      
+
+      dlSQL = "delete from Follows where follower = #{getUser[0]["idnum"]} and followed = #{params[:id]}"
+      unfol = ActiveRecord::Base.connection.exec_query(dlSQL);
+
+      respond_to do |format|
+        msg = { :status => "Unfollowed"}
+        format.json  { render :json => msg } # don't do msg.to_json
+      end          
+    
     end
 end
