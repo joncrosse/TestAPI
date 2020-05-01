@@ -49,30 +49,14 @@ like story
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 /api/suggestions    // recommend (4) followers based on other followers
-                  // [EDIT 04/16: I'm moving the random part to extra credit]
-// Query should be give idnum, handle of at most 4 (Hint: LIMIT 4)
-// idnum and handles of people followed by people that are followed
-// by you BUT not you and not anyone you
-// already follow.
-// Input: curl -d '{"handle":"@cooldude42", "password":"mysecret!"}' -H "Content-Type: application/json" -X POST http://localhost:9990/api/suggestions (Links to an external site.)
-// Output, status > 0 is the number of suggested people returned
-// Output: {"status":"3", "idnums":"1,2,4", "handles":"@paul,@carlos","@fake"}
-// Output: {"status":"0", "error":"no suggestions"}
 
-Steps: (pseudo code)
-suggestions[3] = ('','','','')
-i = 0;
-Loop through all USER in Identity
-	if idnum != USER.idnum #User is not the current user
-		following = select * from Follows where follower = idnum AND followed = USER.idnum; 
-		if following is empty:
-			suggestions[i] = USER.idnum;
-			i += 1
-			if i == 4:
-				Done = true;
-	if done = true then break and finish;
-output suggestions;
-
+select a.idnum, a.handle from Identity a
+JOIN Follows x ON(a.idnum = x.followed)
+WHERE x.follower IN (SELECT followed FROM Follows WHERE follower = 4)
+AND
+x.followed NOT IN (SELECT followed FROM Follows WHERE follower = 4)
+AND a.idnum != 4
+GROUP BY a.idnum;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
