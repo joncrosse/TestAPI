@@ -56,7 +56,8 @@ WHERE x.follower IN (SELECT followed FROM Follows WHERE follower = 4)
 AND
 x.followed NOT IN (SELECT followed FROM Follows WHERE follower = 4)
 AND a.idnum != 4
-GROUP BY a.idnum;
+GROUP BY a.idnum
+LIMIT 4;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
