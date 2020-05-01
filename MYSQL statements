@@ -24,7 +24,15 @@ Provided:
 insert into Identity (handle, password, fullname, location, email, bdate, joined) values('jcock', 'test', 'Jack Hancock', 'Lexington', 'jcock@gmail.com', '1996-01-01', '2020-04-29');
  
  //SeeUser\\
- select * from Identity where idnum = idnum;
+ select handle, 
+       fullname, 
+       location,
+       email,
+       bdate,
+       joined 
+       from Identity i
+       JOIN Block b ON (i.idnum = b.idnum)
+       where i.idnum = #{params[:id]} AND b.blocked != 1;
 
 //Unfollow\\
 delete from Follows where follower = idnum and followed = idnum;
