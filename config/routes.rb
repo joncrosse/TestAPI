@@ -1,10 +1,13 @@
 Rails.application.routes.draw do
-  namespace 'api' do
-    namespace 'status'do
-      puts '1'
 
-  get 'welcome/status'
+  get 'welcome/index'
   root 'welcome#index'
-    end
-  end
+
+  get 'api/status'
+  post 'api/status'
+
+  #get 'api/seeuser/:id'
+  post 'api/seeuser/:id', to: 'api#seeuser'
+  
+  post 'api/createuser'
 end
