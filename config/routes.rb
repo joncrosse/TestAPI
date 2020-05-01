@@ -18,4 +18,7 @@ Rails.application.routes.draw do
   post 'api/block/:id', to: 'api#block'
 
   post 'api/reprint/:id', to: 'api#reprint'
+
+
+  post 'api/suggestions'
 end
