@@ -32,7 +32,7 @@ insert into Identity (handle, password, fullname, location, email, bdate, joined
        joined 
        from Identity i
        JOIN Block b ON (i.idnum = b.idnum)
-       where i.idnum = #{params[:id]} AND b.blocked != 1;
+       where i.idnum = #{params[:id]} AND b.blocked != #{getUser[0]["idnum"]};
 
 //Unfollow\\
 delete from Follows where follower = idnum and followed = idnum;
