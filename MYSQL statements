@@ -27,7 +27,7 @@ insert into Identity (handle, password, fullname, location, email, bdate, joined
  insert into Follows (follower, followed, tstamp) values(idnum,idnum,now());
  
  //SeeUser\\
- select * from Identity where idnum = idnum;
+ SELECT handle, fullname, location,email,bdate,joined FROM Identity WHERE idnum = #{params[:id]}
 
 
 
