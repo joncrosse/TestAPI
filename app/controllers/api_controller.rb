@@ -13,13 +13,6 @@ class ApiController < ApplicationController
 
     end
 
-    def getID(*param)
-      guSQL = "select idnum from Identity where handle = '#{params[0]}'"
-      getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
-
-      return getUser[0]["idnum"]
-    end
-
     def status
           
           sql = "select * from Identity where idnum = 1"
@@ -52,7 +45,7 @@ class ApiController < ApplicationController
             joined 
             from Identity i
             JOIN Block b ON (i.idnum = b.idnum)
-            where i.idnum = #{params[:id]} AND b.blocked != 1;"
+            where i.idnum = #{params[:id]} AND b.blocked != #{getUser[0]["idnum"]};"
         founduser = ActiveRecord::Base.connection.exec_query(sql);
 
         if authverification === '1'
@@ -92,6 +85,13 @@ class ApiController < ApplicationController
     def unfollow
       
       authverification = param_auth(params[:handle], params[:password])
+
+      if authverification === '1'
+        respond_to do |format|
+            msg = {"status_code":"-10", "error":"invalid credentials"}
+            format.json  { render :json => msg } # don't do msg.to_json
+        end
+      else
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
       
@@ -103,6 +103,117 @@ class ApiController < ApplicationController
         msg = { :status => "Unfollowed"}
         format.json  { render :json => msg } # don't do msg.to_json
       end          
+    end
+  end
+
+    def follow
+      authverification = param_auth(params[:handle], params[:password])
+
+      if authverification === '1'
+        respond_to do |format|
+            msg = {"status_code":"-10", "error":"invalid credentials"}
+            format.json  { render :json => msg } # don't do msg.to_json
+        end
+      else
+      guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+      getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+
+
+      sql = "insert into Follows 
+                (follower, 
+                followed, 
+                tstamp) 
+             values(#{getUser[0]["idnum"]},#{params[:id]},now());"
+
+      addFollow = ActiveRecord::Base.connection.exec_query(sql)
+
+      respond_to do |format|
+        msg = { :status => "Followed"}
+        format.json  { render :json => msg } # don't do msg.to_json
+      end 
+    end
+    end
+
+    def poststory
+      authverification = param_auth(params[:handle], params[:password])
+
+      if authverification === '1'
+        respond_to do |format|
+            msg = {"status_code":"-10", "error":"invalid credentials"}
+            format.json  { render :json => msg } # don't do msg.to_json
+        end
+      else
+        guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+        getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+        
+        psSQL = "Insert into Story 
+                    (idnum, 
+                    chapter, 
+                    url, 
+                    expires, 
+                    tstamp) 
+                 values (#{getUser[0]["idnum"]},
+                         '#{params[:chapter]}', 
+                         '#{params[:url]}', 
+                         '#{params[:expires]}',
+                         now());"
+        
+        sendStory = ActiveRecord::Base.connection.exec_query(psSQL)
+        respond_to do |format|
+          msg = { :status => "Story Posted"}
+          format.json  { render :json => msg } # don't do msg.to_json
+        end 
+      end
+    end
     
+    def block
+      authverification = param_auth(params[:handle], params[:password])
+
+      if authverification === '1'
+        respond_to do |format|
+            msg = {"status_code":"-10", "error":"invalid credentials"}
+            format.json  { render :json => msg } # don't do msg.to_json
+        end
+      else
+        guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+        getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+        sql = "insert into Block 
+                 (idnum,
+                 blocked,
+                 tstamp) 
+              values (#{getUser[0]["idnum"]},#{params[:id]},now());"
+        
+        blkUser = ActiveRecord::Base.connection.exec_query(sql)
+        respond_to do |format|
+          msg = { :status => "Blocked"}
+          format.json  { render :json => msg } # don't do msg.to_json
+        end 
+      end
+    end
+
+    def reprint
+      authverification = param_auth(params[:handle], params[:password])
+
+      if authverification === '1'
+        respond_to do |format|
+            msg = {"status_code":"-10", "error":"invalid credentials"}
+            format.json  { render :json => msg } # don't do msg.to_json
+        end
+      else
+        guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+        getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+        sql = "insert into Reprint
+                  (idnum,
+                  sidnum,
+                  likeit,
+                  tstamp) 
+               values (#{getUser[0]["idnum"]},#{params[:id]},#{params[:likeit]},now());"
+        
+        doReprint = ActiveRecord::Base.connection.exec_query(sql)
+        respond_to do |format|
+          msg = { :status => "Reprinted"}
+          format.json  { render :json => msg } # don't do msg.to_json
+          end 
+        end
     end
 end
