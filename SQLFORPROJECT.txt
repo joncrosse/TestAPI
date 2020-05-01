@@ -1,0 +1,133 @@
+/api/unfollow       // remove someone from your followings list
+
+// Input: curl -d '{"handle":"@cooldude42", "password":"mysecret!"}' -H "Content-Type: application/json" -X POST http://localhost:9990/api/unfollow/2 (Links to an external site.)
+
+// 2 = Identity.idnum
+
+// Output: {"status":"1"}
+
+// Output: {"status":"0", "error":"not currently followed"}
+// etc.
+
+
+steps:
+check 'follower' follows 'followed' if true
+delete where 'follower' follows 'followed'
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/api/reprint        // "like" or "retweet" someone's Story
+// Input: curl -d '{"handle":"@cooldude42", "password":"mysecret!", "likeit":true}' -H "Content-Type: application/json" -X POST http://localhost:9990/api/reprint/45 (Links to an external site.)
+// if "likeit" is omitted, a coercion to boolean results in "false".
+// FYI. Seems like reasonable result. [04/16]
+// 45 = Story.sidnum
+// Output: {"status":"1"}
+// Output: {"status":"0", "error":"blocked"}
+// Output: {"status":"0", "error":"story not found"}
+// etc.
+
+steps:
+Check if user is blocked
+Check if story exists
+like story
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/api/poststory      // post a story/comment/etc and maybe picture
+// Input: curl -d '{"handle":"@cooldude42", "password":"mysecret!", "chapter":"I ate at Mario's!", "url":"http://imagesite.dne/marios.jpg"}' -H "Content-Type: application/json" -X POST http://localhost:9990/api/poststory (Links to an external site.)
+// Output: {"status":"1"}
+// Output: {"status":"0", "error":"invalid expires date"}
+
+// [EDIT 04/22: this is erroneous, let the user do this, its their fault]
+// NO! Output: {"status":"0", "error":"expire date in past"}
+// Output: {"status":"0", "error":"missing chapter"}
+// etc.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/api/suggestions    // recommend (4) followers based on other followers
+                  // [EDIT 04/16: I'm moving the random part to extra credit]
+// Query should be give idnum, handle of at most 4 (Hint: LIMIT 4)
+// idnum and handles of people followed by people that are followed
+// by you BUT not you and not anyone you
+// already follow.
+// Input: curl -d '{"handle":"@cooldude42", "password":"mysecret!"}' -H "Content-Type: application/json" -X POST http://localhost:9990/api/suggestions (Links to an external site.)
+// Output, status > 0 is the number of suggested people returned
+// Output: {"status":"3", "idnums":"1,2,4", "handles":"@paul,@carlos","@fake"}
+// Output: {"status":"0", "error":"no suggestions"}
+
+Steps: (pseudo code)
+suggestions[3] = ('','','','')
+i = 0;
+Loop through all USER in Identity
+	if idnum != USER.idnum #User is not the current user
+		following = select * from Follows where follower = idnum AND followed = USER.idnum; 
+		if following is empty:
+			suggestions[i] = USER.idnum;
+			i += 1
+			if i == 4:
+				Done = true;
+	if done = true then break and finish;
+output suggestions;
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/api/timeline       // see all Story/Reprints of people you follow
+                    //     for a particular time interval
+// Input: curl -d '{"handle":"@cooldude42", "password":"mysecret!", "newest":"2020-04-02 15:33:59", "oldest":"2020-03-29 00:00:01"}' -H "Content-Type: application/json" -X POST http://localhost:9990/api/timeline (Links to an external site.)
+//
+// This is the most complicated API. You'll need a single SQL statement to get
+// all the points for the rubric. This is a challenge to make the DBMS do all the hard
+// work! Think through what is needed to JOIN all the tables to produce this answer set.
+// Your task is to create a single SQL query based on the requester's handle, producing
+// all Story entries for all handles they follow, including any Reprint/retweets
+// (ie, where Reprint.likeit=false). Only list those that have tstamps between the
+// interval (older than "newest" and newer than "oldest" submitted). You can
+// assume newest and oldest are valid values. You will have to deal with all
+// tables, including the Block table. (if someone retweets a Story of someone that
+// has blocked you, it should not show on your timeline).
+// [EDIT 04/16] Here is the output for timeline. Enumerate the key for each story/reprint
+// Then the value/righthand side will be a JSON object itself, curly brace,
+// then (5) key/value pairs and a closing brace }. In the example code you
+// can put this in a Map<String,String>. We're not worried about using this
+// output, we just want to see it.
+// [EDIT 04/17] I left off sidnum, but it is needed.]
+// Output: {"0":"{\"type\":\"story\",\"author\":\"@cooldude44\",\"sidnum\":\"14\",\"chapter\":\"Just some set math, SQL is super fun!\",\"posted\":\"2020-04-16 15:37:48\"}","1":"{\"type\":\"reprint\",\"author\":\"@cooldude44\",\"sidnum\":\"15\",\"chapter\":\"JSON objects are fun and useful!\",\"posted\":\"2020-04-15 10:37:44\"}","status":"2"}
+// Output: {"status":"0"}
+// etc.
+
+Output:
+
+(story/reprint) (author) (story id) (chapter) (tstamp)
+
+Sort by status and lname.
+	SELECT "advisor" status, fname, lname, smaddr email FROM PERSON a,
+		DIGITAL d, ADVISOR ad WHERE a.idnum=d.idnum AND d.smtype='email'AND ad.advisor=a.idnum
+	UNION
+	SELECT DISTINCT "student" status, fname, lname, smaddr emailFROM PERSON a, DIGITAL d, ADVISOR ad WHERE a.idnum=d.idnumAND d.smtype='email' AND ad.student ORDER BY 1,3;
+
+
+SELECT 'story' status, handle author##ACTUALLYGRABFROMIDENTITY, sidnum, chapter, tstamp posted FROM Story a,
+	Identity d, Follows f WHERE a.idnum = d.idnum AND f.follower = a.idnum AND \\
+
+
+
+	SELECT s.fname, s.lname, streetaddr, CONCAT(ad.fname, " ", ad.lname)from PERSON s
+	LEFT OUTER JOIN ADVISOR ad ON (idnum = ad.student)
+	LEFT OUTER JOIN PERSON adv ON (adv.idnum = advis.advisor)
+	LEFT OUTER JOIN ADDR addr ON (addr.idnum = stu.idnum)
+	WHERE addr.adtype = "local" XOR addr.adtype = "permanent";
+
+
+
+SELECT 'story' status, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Block b, Story s
+LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) WHERE s.idnum != 1
+
+UNION
+
+SELECT 'Reprint' status, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum);
