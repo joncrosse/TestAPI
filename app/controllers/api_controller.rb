@@ -20,24 +20,15 @@ class ApiController < ApplicationController
       end
     end
 
-    def status
-          
-          sql = "select * from Identity where idnum = 1"
-          
-          status = param_auth(params[:handle], params[:password])
-
-          if status === '1'
-            respond_to do |format|
-                msg = {"status_code":"-10", "error":"invalid credentials"}
-                format.json  { render :json => msg } # don't do msg.to_json
-            end
-          else
-          respond_to do |format|
-            msg = { :status => "Access Granted", :Handle => params[:handle]}
-            format.json  { render :json => msg } # don't do msg.to_json
-          end
-        end
-          
+    def blockedUsers(*param)
+      checkBlocked = "select handle, 
+                        fullname
+                        from Identity i
+                        LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
+                        where NOT EXISTS (select * from Block where idnum = #{param[0]} AND blocked = #{param[1]}) AND i.idnum = #{param[0]} GROUP BY i.idnum;"
+    
+      getBlockedUsers = ActiveRecord::Base.connection.exec_query(checkBlocked)
+      return getBlockedUsers
     end
 
     def seeuser
@@ -48,7 +39,7 @@ class ApiController < ApplicationController
             sql = "select handle, 
             fullname, 
             location,
-            email,
+            xmail,
             bdate,
             joined 
             from Identity i
@@ -74,8 +65,8 @@ class ApiController < ApplicationController
     end
 
     def createuser
-            sql = "insert into Identity (handle, password, fullname, location, email, bdate, joined) 
-                   values('#{params[:handle]}', '#{params[:password]}', '#{params[:fullname]}', '#{params[:location]}', '#{params[:email]}', '#{params[:bdate]}', now());"
+            sql = "insert into Identity (handle, password, fullname, location, xmail, bdate, joined) 
+                   values('#{params[:handle]}', '#{params[:password]}', '#{params[:fullname]}', '#{params[:location]}', '#{params[:mail]}', '#{params[:bdate]}', now());"
 
             sqlOutput = "select idnum from Identity where handle = '#{params[:handle]}'"
             begin
@@ -126,13 +117,9 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+
       if getUser.any?
-      checkBlocked = "select handle, 
-                        fullname
-                        from Identity i
-                        LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
-                        where NOT EXISTS (select * from Block where idnum = #{params[:id]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{params[:id]} GROUP BY i.idnum;"
-      isblocked = ActiveRecord::Base.connection.exec_query(checkBlocked)
+      isblocked = blockedUsers(params[:id], getUser[0]["idnum"])
       end
 
       if authverification === '1'
@@ -226,14 +213,9 @@ class ApiController < ApplicationController
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
       soSQL = "select idnum from Story where sidnum = '#{params[:id]}'"
       getStoryOwner = ActiveRecord::Base.connection.exec_query(soSQL)
-      if getUser.any?
-      checkBlocked = "select handle, 
-                      fullname
-                      from Identity i
-                      LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
-                      where NOT EXISTS (select * from Block where idnum = #{getStoryOwner[0]["idnum"]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{getStoryOwner[0]["idnum"]} GROUP BY i.idnum;"
-                      
-      getBlocked = ActiveRecord::Base.connection.exec_query(checkBlocked);
+
+      if getUser.any?              
+      getBlocked = blockedUsers(getStoryOwner[0]["idnum"], getUser[0]["idnum"])
       end
 
       if authverification === '1'
