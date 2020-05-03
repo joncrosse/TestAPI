@@ -55,13 +55,13 @@ class ApiController < ApplicationController
             end
         elsif founduser.blank?
             respond_to do |format|
-              msg = { :status => "Access Granted", :data => "User not found"}
+              msg = { :status => "[]"}
               format.json  { render :json => msg } # don't do msg.to_json
             end    
 
         else  
             respond_to do |format|
-              msg = { :status => "Access Granted", :data => founduser}
+              msg = { :status => "1", :data => founduser}
               format.json  { render :json => msg } # don't do msg.to_json
           
             end
@@ -73,13 +73,21 @@ class ApiController < ApplicationController
                    values('#{params[:handle]}', '#{params[:password]}', '#{params[:fullname]}', '#{params[:location]}', '#{params[:email]}', '#{params[:bdate]}', now());"
 
             sqlOutput = "select idnum from Identity where handle = '#{params[:handle]}'"
-            
+            begin
             userCreated = ActiveRecord::Base.connection.exec_query(sql);
+            rescue
+              respond_to do |format|
+                msg = { :status => "-2", :error => "SQL Constraint Exception"}
+                format.json  { render :json => msg } # don't do msg.to_json
+      
+              end
+            else
             userDone = ActiveRecord::Base.connection.exec_query(sqlOutput);
             respond_to do |format|
               msg = { :status => userDone.rows}
               format.json  { render :json => msg } # don't do msg.to_json
-            end          
+            end
+          end          
     end
 
     def unfollow
@@ -97,14 +105,20 @@ class ApiController < ApplicationController
       
 
       dlSQL = "delete from Follows where follower = #{getUser[0]["idnum"]} and followed = #{params[:id]}"
+      begin
       unfol = ActiveRecord::Base.connection.exec_query(dlSQL);
-
+      rescue
+        respond_to do |format|
+          msg = { :status => "Currently not followed"}
+          format.json  { render :json => msg } # don't do msg.to_json
+        end 
+      end
       respond_to do |format|
         msg = { :status => "Unfollowed"}
         format.json  { render :json => msg } # don't do msg.to_json
       end          
     end
-  end
+    end
 
     def follow
       authverification = param_auth(params[:handle], params[:password])
@@ -112,11 +126,10 @@ class ApiController < ApplicationController
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
 
       checkBlocked = "select handle, 
-                        fullname, 
+                        fullname
                         from Identity i
                         LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
                         where NOT EXISTS (select * from Block where idnum = #{params[:id]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{params[:id]} GROUP BY i.idnum;"
-
       isblocked = ActiveRecord::Base.connection.exec_query(checkBlocked)
 
 
@@ -127,7 +140,7 @@ class ApiController < ApplicationController
         end
       elsif isblocked.blank?
         respond_to do |format|
-          msg = { :status => "0", :data => "User not found"}
+          msg = { :status => "0", :error => "Blocked"}
           format.json  { render :json => msg } # don't do msg.to_json
         end
         
@@ -216,15 +229,34 @@ class ApiController < ApplicationController
 
     def reprint
       authverification = param_auth(params[:handle], params[:password])
+      guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+      getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+      soSQL = "select idnum from Story where sidnum = '#{params[:id]}'"
+      getStoryOwner = ActiveRecord::Base.connection.exec_query(soSQL)
+      checkBlocked = "select handle, 
+                      fullname
+                      from Identity i
+                      LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
+                      where NOT EXISTS (select * from Block where idnum = #{getStoryOwner[0]["idnum"]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{getStoryOwner[0]["idnum"]} GROUP BY i.idnum;"
+                      
+      getBlocked = ActiveRecord::Base.connection.exec_query(checkBlocked);
+      
 
       if authverification === '1'
         respond_to do |format|
             msg = {"status_code":"-10", "error":"invalid credentials"}
             format.json  { render :json => msg } # don't do msg.to_json
         end
+
+      elsif getBlocked.blank?
+        respond_to do |format|
+          msg = { :status => "0", :data => "Story not found"}
+          format.json  { render :json => msg } # don't do msg.to_json
+        end
       else
-        guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
-        getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+        if params[:likeit] != 1 and params[:likeit] !=0
+          params[:likeit] = 0
+        end
         sql = "insert into Reprint
                   (idnum,
                   sidnum,
@@ -254,7 +286,7 @@ class ApiController < ApplicationController
                 GROUP BY a.idnum
                 LIMIT 4;"
 
-      getSugg = ActiveRecord::Base.connection.exec_query(suggSQL)
+      getSugg = ActiveRecord::Base.connection.exec_query(suggSQL).as_json
 
       if authverification === '1'
         respond_to do |format|
@@ -270,7 +302,7 @@ class ApiController < ApplicationController
 
       else
         respond_to do |format|
-          msg = { :status => "Access Granted", :data => getSugg}
+          msg = { :status => getSugg.size(), :data => getSugg}
           format.json  { render :json => msg } # don't do msg.to_json
         end
       end
