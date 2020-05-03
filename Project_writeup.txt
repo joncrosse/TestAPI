@@ -28,13 +28,13 @@ Jon Crosse    - 50%
 Table of Endpoints:
 1. /api/createuser     // Complete
 2. /api/seeuser        // Complete
-3. /api/suggestions    // 
+3. /api/suggestions    // Complete
 4. /api/poststory      // Complete
 5. /api/reprint        // Complete
 6. /api/follow         // Complete
 7. /api/unfollow       // Complete
 8. /api/block          // Complete
-9. /api/timeline       // 
+9. /api/timeline       // Complete
 
 Our team used Ruby on Rails to create a RESTful API server.
 
