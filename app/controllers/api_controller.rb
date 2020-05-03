@@ -13,6 +13,13 @@ class ApiController < ApplicationController
 
     end
 
+    def auth_error()
+      respond_to do |format|
+        msg = {"status_code":"-10", "error":"invalid credentials"}
+        format.json  { render :json => msg } # don't do msg.to_json
+      end
+    end
+
     def status
           
           sql = "select * from Identity where idnum = 1"
@@ -37,6 +44,7 @@ class ApiController < ApplicationController
         guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
         getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
         authverification = param_auth(params[:handle], params[:password])
+        if getUser.any?
             sql = "select handle, 
             fullname, 
             location,
@@ -46,13 +54,10 @@ class ApiController < ApplicationController
             from Identity i
             LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
             where NOT EXISTS (select * from Block where idnum = #{params[:id]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{params[:id]} GROUP BY i.idnum;"
-        founduser = ActiveRecord::Base.connection.exec_query(sql);
-
+            founduser = ActiveRecord::Base.connection.exec_query(sql);
+        end
         if authverification === '1'
-            respond_to do |format|
-                msg = {"status_code":"-10", "error":"invalid credentials"}
-                format.json  { render :json => msg } # don't do msg.to_json
-            end
+            auth_error()
         elsif founduser.blank?
             respond_to do |format|
               msg = { :status => "[]"}
@@ -95,10 +100,7 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
 
       if authverification === '1'
-        respond_to do |format|
-            msg = {"status_code":"-10", "error":"invalid credentials"}
-            format.json  { render :json => msg } # don't do msg.to_json
-        end
+        auth_error()
       else
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
@@ -124,20 +126,17 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
-
+      if getUser.any?
       checkBlocked = "select handle, 
                         fullname
                         from Identity i
                         LEFT OUTER JOIN Block b ON (i.idnum = b.idnum)
                         where NOT EXISTS (select * from Block where idnum = #{params[:id]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{params[:id]} GROUP BY i.idnum;"
       isblocked = ActiveRecord::Base.connection.exec_query(checkBlocked)
-
+      end
 
       if authverification === '1'
-        respond_to do |format|
-            msg = {"status_code":"-10", "error":"invalid credentials"}
-            format.json  { render :json => msg } # don't do msg.to_json
-        end
+        auth_error()
       elsif isblocked.blank?
         respond_to do |format|
           msg = { :status => "0", :error => "Blocked"}
@@ -165,10 +164,7 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
 
       if authverification === '1'
-        respond_to do |format|
-            msg = {"status_code":"-10", "error":"invalid credentials"}
-            format.json  { render :json => msg } # don't do msg.to_json
-        end
+        auth_error()
       else
         guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
         getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
@@ -206,10 +202,7 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
 
       if authverification === '1'
-        respond_to do |format|
-            msg = {"status_code":"-10", "error":"invalid credentials"}
-            format.json  { render :json => msg } # don't do msg.to_json
-        end
+        auth_error()
       else
         guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
         getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
@@ -233,6 +226,7 @@ class ApiController < ApplicationController
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
       soSQL = "select idnum from Story where sidnum = '#{params[:id]}'"
       getStoryOwner = ActiveRecord::Base.connection.exec_query(soSQL)
+      if getUser.any?
       checkBlocked = "select handle, 
                       fullname
                       from Identity i
@@ -240,13 +234,10 @@ class ApiController < ApplicationController
                       where NOT EXISTS (select * from Block where idnum = #{getStoryOwner[0]["idnum"]} AND blocked = #{getUser[0]["idnum"]}) AND i.idnum = #{getStoryOwner[0]["idnum"]} GROUP BY i.idnum;"
                       
       getBlocked = ActiveRecord::Base.connection.exec_query(checkBlocked);
-      
+      end
 
       if authverification === '1'
-        respond_to do |format|
-            msg = {"status_code":"-10", "error":"invalid credentials"}
-            format.json  { render :json => msg } # don't do msg.to_json
-        end
+        auth_error()
 
       elsif getBlocked.blank?
         respond_to do |format|
@@ -276,7 +267,7 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
-        
+        if getUser.any?
       suggSQL = "select a.idnum, a.handle from Identity a
                 JOIN Follows x ON(a.idnum = x.followed)
                 WHERE x.follower IN (SELECT followed FROM Follows WHERE follower = #{getUser[0]["idnum"]})
@@ -287,12 +278,10 @@ class ApiController < ApplicationController
                 LIMIT 4;"
 
       getSugg = ActiveRecord::Base.connection.exec_query(suggSQL).as_json
+        end
 
       if authverification === '1'
-        respond_to do |format|
-            msg = {"status_code":"-10", "error":"invalid credentials"}
-            format.json  { render :json => msg } # don't do msg.to_json
-        end
+        auth_error()
 
       elsif getSugg.blank?
         respond_to do |format|
@@ -311,7 +300,7 @@ class ApiController < ApplicationController
     def timeline
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
-      timeLineSQL = "SELECT 'Story' status, i.idnum, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+      timeLineSQL = "SELECT 'Story' type, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
                     LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
                     LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
                     LEFT OUTER JOIN Block b on (s.idnum = b.idnum)
@@ -321,7 +310,7 @@ class ApiController < ApplicationController
                     AND s.tstamp BETWEEN '#{params[:oldest]}' AND '#{params[:newest]}'
                     GROUP BY s.sidnum
                     UNION
-                    SELECT 'Reprint' status, i.idnum, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+                    SELECT 'Reprint' type, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
                     LEFT OUTER JOIN Reprint r ON (s.idnum = r.idnum)
                     LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
                     LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
@@ -338,7 +327,6 @@ class ApiController < ApplicationController
       respond_to do |format|
         msg = { :status => "1", :data => getTimeLine}
         format.json  { render :json => msg } # don't do msg.to_json
-      end
-      
+      end 
     end
 end
