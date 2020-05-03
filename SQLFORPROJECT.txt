@@ -85,34 +85,27 @@ LIMIT 4;
 // Output: {"status":"0"}
 // etc.
 
-Output:
-
-(story/reprint) (author) (story id) (chapter) (tstamp)
-
-Sort by status and lname.
-	SELECT "advisor" status, fname, lname, smaddr email FROM PERSON a,
-		DIGITAL d, ADVISOR ad WHERE a.idnum=d.idnum AND d.smtype='email'AND ad.advisor=a.idnum
-	UNION
-	SELECT DISTINCT "student" status, fname, lname, smaddr emailFROM PERSON a, DIGITAL d, ADVISOR ad WHERE a.idnum=d.idnumAND d.smtype='email' AND ad.student ORDER BY 1,3;
 
 
-SELECT 'story' status, handle author##ACTUALLYGRABFROMIDENTITY, sidnum, chapter, tstamp posted FROM Story a,
-	Identity d, Follows f WHERE a.idnum = d.idnum AND f.follower = a.idnum AND \\
-
-
-
-	SELECT s.fname, s.lname, streetaddr, CONCAT(ad.fname, " ", ad.lname)from PERSON s
-	LEFT OUTER JOIN ADVISOR ad ON (idnum = ad.student)
-	LEFT OUTER JOIN PERSON adv ON (adv.idnum = advis.advisor)
-	LEFT OUTER JOIN ADDR addr ON (addr.idnum = stu.idnum)
-	WHERE addr.adtype = "local" XOR addr.adtype = "permanent";
-
-
-
-SELECT 'story' status, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Block b, Story s
-LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) WHERE s.idnum != 1
-
+SELECT 'Story' status, i.idnum, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
+LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
+LEFT OUTER JOIN Block b on (s.idnum = b.idnum)
+WHERE s.idnum != #{getUser[0]["idnum"]}
+AND (f.follower = #{getUser[0]["idnum"]})
+AND s.idnum NOT IN (SELECT idnum FROM Block WHERE blocked = #{getUser[0]["idnum"]})
+AND s.tstamp BETWEEN #{getUser[0]["oldest"]} AND #{getUser[0]["newest"]}
+GROUP BY s.sidnum
 UNION
+SELECT 'Reprint' status, i.idnum, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+LEFT OUTER JOIN Reprint r ON (s.idnum = r.idnum)
+LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
+LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
+WHERE r.idnum IN 
+(SELECT followed from Follows where follower IN 
+(SELECT followed from Follows where follower = #{getUser[0]["idnum"]}) AND
+followed NOT IN(SELECT followed from Follows where follower = #{getUser[0]["idnum"]}))
+AND r.likeit = 0
+AND s.tstamp BETWEEN #{getUser[0]["oldest"]} AND #{getUser[0]["newest"]}
+GROUP BY s.sidnum;
 
-SELECT 'Reprint' status, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
-LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum);
