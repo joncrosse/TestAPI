@@ -309,6 +309,36 @@ class ApiController < ApplicationController
     end
 
     def timeline
-        
+      guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
+      getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+      timeLineSQL = "SELECT 'Story' status, i.idnum, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+                    LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
+                    LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
+                    LEFT OUTER JOIN Block b on (s.idnum = b.idnum)
+                    WHERE s.idnum != #{getUser[0]["idnum"]}
+                    AND (f.follower = #{getUser[0]["idnum"]})
+                    AND s.idnum NOT IN (SELECT idnum FROM Block WHERE blocked = #{getUser[0]["idnum"]})
+                    AND s.tstamp BETWEEN '#{params[:oldest]}' AND '#{params[:newest]}'
+                    GROUP BY s.sidnum
+                    UNION
+                    SELECT 'Reprint' status, i.idnum, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
+                    LEFT OUTER JOIN Reprint r ON (s.idnum = r.idnum)
+                    LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
+                    LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
+                    WHERE r.idnum IN 
+                    (SELECT followed from Follows where follower IN 
+                    (SELECT followed from Follows where follower = #{getUser[0]["idnum"]}) AND
+                    followed NOT IN(SELECT followed from Follows where follower = #{getUser[0]["idnum"]}))
+                    AND s.idnum NOT IN (SELECT idnum FROM Block WHERE blocked = #{getUser[0]["idnum"]})
+                    AND r.likeit = 0
+                    AND s.tstamp BETWEEN '#{params[:oldest]}' AND '#{params[:newest]}'
+                    GROUP BY s.sidnum;"
+      getTimeLine = ActiveRecord::Base.connection.exec_query(timeLineSQL);
+
+      respond_to do |format|
+        msg = { :status => "1", :data => getTimeLine}
+        format.json  { render :json => msg } # don't do msg.to_json
+      end
+      
     end
 end
