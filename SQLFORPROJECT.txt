@@ -105,6 +105,7 @@ WHERE r.idnum IN
 (SELECT followed from Follows where follower IN 
 (SELECT followed from Follows where follower = #{getUser[0]["idnum"]}) AND
 followed NOT IN(SELECT followed from Follows where follower = #{getUser[0]["idnum"]}))
+AND s.idnum NOT IN (SELECT idnum FROM Block WHERE blocked = #{getUser[0]["idnum"]})
 AND r.likeit = 0
 AND s.tstamp BETWEEN #{getUser[0]["oldest"]} AND #{getUser[0]["newest"]}
 GROUP BY s.sidnum;
