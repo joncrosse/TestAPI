@@ -249,7 +249,10 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
-        if getUser.any?
+      if authverification === 1
+        auth_error
+
+      elsif getUser.any?
       suggSQL = "select a.idnum, a.handle from Identity a
                 JOIN Follows x ON(a.idnum = x.followed)
                 WHERE x.follower IN (SELECT followed FROM Follows WHERE follower = #{getUser[0]["idnum"]})
@@ -280,8 +283,13 @@ class ApiController < ApplicationController
     end
 
     def timeline
+      authverification = param_auth(params[:handle], params[:password])
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
+      if authverification === 1
+        auth_error()
+
+      elsif getUser.any?
       timeLineSQL = "SELECT 'Story' type, i.handle Author, s.sidnum, s.chapter, s.tstamp posted FROM Story s
                     LEFT OUTER JOIN Identity i ON (s.idnum = i.idnum) 
                     LEFT OUTER JOIN Follows f ON (s.idnum = f.followed)
@@ -311,4 +319,7 @@ class ApiController < ApplicationController
         format.json  { render :json => msg } # don't do msg.to_json
       end 
     end
+    end
+
+    
 end
