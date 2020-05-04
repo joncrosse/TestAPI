@@ -1,29 +1,26 @@
-Project_writeup.pdf shall have the following information:
-
-    Your name
-    Your team name
-    Your team size
-    Your team's project URL, like:  http://paul.cs.uky.edu:9990
-    All team members names, including yours.  Next to each name put you opinion the percentage each team member contributed to the project.  Needless to say, the numbers should add up to 100%.  NOTE: if there is a difference in the amounts, or they are skewed, then I will schedule Zoom interviews with each team member.  If a 4 person team has 2 or 3 say they did all the work and the other 1 or 2 did little to none, then grades will be weighted accordingly.
-    1 or 2 sentences on your contribution to the project.
-    All sources other than what has been provided.  This is an individual project, teams should not be collaborating with other teams.
-    A table of endpoints: 9 rows by 2 columns.
-        Each endpoint in the same order as they are listed above, like "/api/createuser".
-        Status of each endpoint's development: 
-            NONE,
-            PLACEHOLDER ("status":"-5", "error":"not yet implemented", etc),
-            PARTIAL,
-            COMPLETE.
-    If you did not use the starter code, you must provide all source code to produce a running http RESTful API server.  For this requirement you can put "Starter code/IntelliJ used", or describe what you used like "Ruby on Rails", or "Python with XYZ".
-        If you did not use the starter code you need to provide either a Makefile (and state how to invoke it) or STEP BY STEP instructions on how to run your server.
-
-
+----------------------------------------------------------------------
 Project Write Up
+Name          - Jack Hancock
 Team name     - BOC
 Team size     - 2 
-Team url      - http://localhost:3000
+Team url      -  http://jcha265.cs.uky.edu:9990
 Jack Hancock  - 50%
 Jon Crosse    - 50%
+
+----------------------------------------------------------------------
+
+Project contribution: Me and my partner Jon Crosse have worked through almost the entire project together through zoom and the work was split very evenly. Overall, I did most of the SQL coding and Jon did most of the Ruby coding. However, we both know how to do each of these and would help eachother out when we got stuck on things. Thus, we both did a little of each side. 
+
+---------------------------------------------------------------------
+
+SOURCES:
+https://www.w3schools.com/sql/sql_ref_keywords.asp - This is a huge SQL references web page. It helps to explain how all of the SQL commands work. I referenced this page numerous times throughout the project to make sure I was using commands like EXISTS IN, specific JOINs, and other commands correctly. No code was copied from this page.
+
+https://guides.rubyonrails.org/getting_started.html - Before starting this project, me and Jon both did this official Ruby on Rails introduction project so that we could learn more about RoR before diving in.
+
+https://guides.rubyonrails.org/api_app.html - During the project we referenced this official Ruby on Rails documentation that provided us tips on how to build an API only RoR server
+
+----------------------------------------------------------------------
 
 Table of Endpoints:
 1. /api/createuser     // Complete
@@ -35,12 +32,15 @@ Table of Endpoints:
 7. /api/unfollow       // Complete
 8. /api/block          // Complete
 9. /api/timeline       // Complete
+----------------------------------------------------------------------
 
 Our team used Ruby on Rails to create a RESTful API server.
 
 How to run our server:
 
-1. Make sure you have Ruby / Ruby On Rails installed
+1. Make sure you have Ruby / Ruby On Rails installed on your machine correctly
 2. Open terminal and navigate to inside of 'RailServer' directory
 3. Run command 'Rails s' to start server
 4. You can then open a new terminal to make curl / API calls to the server
+
+----------------------------------------------------------------------
