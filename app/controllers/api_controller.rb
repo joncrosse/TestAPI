@@ -286,7 +286,7 @@ class ApiController < ApplicationController
       authverification = param_auth(params[:handle], params[:password])
       guSQL = "select idnum from Identity where handle = '#{params[:handle]}'"
       getUser = ActiveRecord::Base.connection.exec_query(guSQL).as_json;
-      if authverification === 1
+      if authverification === '1'
         auth_error()
 
       elsif getUser.any?
